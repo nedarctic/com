@@ -34,7 +34,7 @@ async function refreshAccessToken(refreshToken: string, oldToken: any) {
     };
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const url = req.nextUrl;
 

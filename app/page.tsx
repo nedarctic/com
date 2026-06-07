@@ -1,13 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 import { LogoutButton } from "@/components/logout-button";
+import type { Book } from "@/types/book";
 
 export async function getBooks(): Promise<{ success: boolean; error?: string; data?: any }> {
 
   const session = await getServerSession(authOptions);
   const access_token = session?.accessToken;
-
-  console.log('Access token at the books server component:', access_token);
 
   console.log('payload:',
     JSON.parse(
@@ -18,7 +17,6 @@ export async function getBooks(): Promise<{ success: boolean; error?: string; da
     )
   );
   try {
-    console.log('Access token inside the server component try block:', access_token)
     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/books`, {
       method: 'GET',
       headers: {
@@ -28,7 +26,6 @@ export async function getBooks(): Promise<{ success: boolean; error?: string; da
 
     if (!res.ok) {
       const errorMessage = await res.json();
-      console.log('Error message:', errorMessage)
       return { success: false, error: errorMessage };
     }
 
@@ -41,24 +38,26 @@ export async function getBooks(): Promise<{ success: boolean; error?: string; da
 
 export default async function Page() {
 
-  const { success, error, data }: { success: boolean, error?: string, data?: any } = await getBooks();
-
-
-  if (!success) {
-    console.error('An error occurred while getting books:', error);
-  } else {
-    console.log('Books data:', data);
-  }
-
-
+  const { success, error, data }: { success: boolean, error?: string, data?: Book[] } = await getBooks();
 
   return (
-    <div className="flex flex-col min-h-screen w-full p-10">
+    <div className="flex flex-col min-h-screen w-full p-10 space-y-6">
       <div className="flex justify-between items-center">
         <p className="font-bold text-xl">Bookstore</p>
         <LogoutButton />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {data?.map(({ id, author, description, title, genre, price }) => (
+          <div key={id} className="flex flex-col border-2 border-black rounded-xl p-6 space-y-2">
+            <p className="font-extrabold text-xl">{title}</p>
+            <p className="italic font-normal">By <span className="font-bold text-md">{author}</span></p>
+            <p>Genre: <span className="italic font-semibold text-sm">{genre}</span></p>
+            <p>{description}</p>
+            <p>Price: ${price}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
